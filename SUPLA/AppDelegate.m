@@ -20,6 +20,7 @@
 #import "SuplaApp.h"
 #import "SUPLA-Swift.h"
 #import "SADialog.h"
+@import UserNotifications;
 
 @interface AppDelegate ()
 
@@ -45,6 +46,15 @@
         return true;
     }
 #endif
+    
+    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+    [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound)
+                          completionHandler:^(BOOL granted, NSError * _Nullable error) {
+        if (!error) {
+            NSLog(@"request authorization succeeded!");
+        }
+    }];
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
     
     // Override point for customization after application launch.
     self.navigation = [[MainNavigationCoordinator alloc] init];
@@ -106,5 +116,22 @@
     // Saves changes in the application's managed object context before the application terminates.
 }
 
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+    const char *data = [deviceToken bytes];
+    NSMutableString *token = [NSMutableString string];
+
+    for (NSUInteger i = 0; i < [deviceToken length]; i++) {
+        [token appendFormat:@"%02.2hhx", data[i]];
+    }
+    
+    NSLog(@"Token: %@", token);
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler
+{
+    // handle your notification
+    NSLog(@"Received notification: %@", userInfo);
+    completionHandler(UIBackgroundFetchResultNewData);
+}
 
 @end
